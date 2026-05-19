@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion'
 
-type CursorState = 'default' | 'link' | 'image' | 'text' | 'click'
+type CursorState = 'default' | 'link' | 'image' | 'text' | 'project' | 'click'
 
 export default function CustomCursor() {
   const innerRef = useRef<HTMLDivElement>(null)
@@ -36,7 +36,9 @@ export default function CustomCursor() {
     const onMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement
 
-      if (target.closest('img') || target.closest('[data-cursor="image"]')) {
+      if (target.closest('[data-cursor="project"]')) {
+        setCursorState('project')
+      } else if (target.closest('img') || target.closest('[data-cursor="image"]')) {
         setCursorState('image')
       } else if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.closest('contenteditable')) {
         setCursorState('text')
@@ -68,6 +70,7 @@ export default function CustomCursor() {
   const isLink = cursorState === 'link'
   const isImage = cursorState === 'image'
   const isText = cursorState === 'text'
+  const isProject = cursorState === 'project'
 
   return (
     <>
@@ -88,7 +91,7 @@ export default function CustomCursor() {
           y: innerSpringY,
           translateX: -4,
           translateY: -4,
-          opacity: isLink ? 0 : 1,
+          opacity: isLink || isProject ? 0 : 1,
           scale: isClicked ? 0.8 : 1,
         }}
       />
@@ -114,15 +117,48 @@ export default function CustomCursor() {
           scale: isClicked ? 0.9 : 1,
         }}
         animate={{
-          width: isText ? 48 : isLink ? 64 : 32,
-          height: isText ? 24 : isLink ? 64 : 32,
+          width: isText ? 48 : isLink ? 64 : isProject ? 80 : 32,
+          height: isText ? 24 : isLink ? 64 : isProject ? 80 : 32,
           borderRadius: isText ? '2px' : '50%',
-          backgroundColor: isLink ? 'rgba(183, 75, 75, 0.2)' : 'transparent',
-          translateX: isText ? -24 : isLink ? -32 : -16,
-          translateY: isText ? -12 : isLink ? -32 : -16,
+          backgroundColor: isProject ? '#e63c2f' : isLink ? 'rgba(183, 75, 75, 0.2)' : 'transparent',
+          translateX: isText ? -24 : isLink ? -32 : isProject ? -40 : -16,
+          translateY: isText ? -12 : isLink ? -32 : isProject ? -40 : -16,
+          borderWidth: isProject ? 0 : 2,
         }}
         transition={{ stiffness: 200, damping: 28 }}
       />
+
+      {/* "VIEW PROJECT" Project Viewer State */}
+      {isProject && (
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: 80,
+            height: 80,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            zIndex: 10001,
+            x: cursorX,
+            y: cursorY,
+            translateX: -40,
+            translateY: -40,
+          }}
+        >
+          <span style={{ color: '#fff', fontSize: '9px', fontFamily: 'JetBrains Mono', fontWeight: 600, letterSpacing: '0.1em' }}>
+            VIEW
+          </span>
+          <span style={{ color: '#fff', fontSize: '9px', fontFamily: 'JetBrains Mono', fontWeight: 600, letterSpacing: '0.1em' }}>
+            PROJECT
+          </span>
+        </motion.div>
+      )}
 
       {/* "VIEW" label on image hover */}
       {isImage && (

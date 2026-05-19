@@ -197,8 +197,8 @@ export default function Hero() {
               >
                 <img
                   data-cursor="image"
-                  src="/hero5.webp"
-                  alt="Ritesh Naik - Web Developer based in Pune"
+                  src={`${import.meta.env.BASE_URL}hero5.webp`}
+                  alt="Ritesh Naik"
                   width="380"
                   height="506"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

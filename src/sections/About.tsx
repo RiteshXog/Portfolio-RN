@@ -35,8 +35,8 @@ export default function About() {
           <div ref={imageRef} className="relative">
             <div className="relative overflow-hidden rounded-lg" style={{ aspectRatio: '4/5' }}>
               <img
-                src="/about3.webp"
-                alt="Ritesh Naik - BCA student at PCCOER Pune"
+                src={`${import.meta.env.BASE_URL}about3.webp`}
+                alt="Ritesh Naik about section imgage"
                 width="400"
                 height="500"
                 className="w-full h-full object-cover"
@@ -75,7 +75,7 @@ export default function About() {
 
             {/* CV Download */}
             <a
-              href="/resume/Ritesh_Naik_Frontend_Engineer.pdf"
+              href={`${import.meta.env.BASE_URL}resume/Ritesh_Naik_Frontend_Engineer.pdf`}
               download
               className="inline-flex items-center gap-2 mt-8 pill-btn-outline"
               aria-label="Download Ritesh Naik's resume"

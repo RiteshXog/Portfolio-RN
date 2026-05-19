@@ -1,5 +1,6 @@
-import { useRef, useState, useEffect, type ReactNode } from 'react'
-import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion'
+import { useRef, useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
+import { motion, useMotionValue, useSpring, useTransform, useReducedMotion } from 'framer-motion'
 
 interface TiltCardProps {
   children: ReactNode
@@ -7,132 +8,110 @@ interface TiltCardProps {
   intensity?: number
 }
 
-export default function TiltCard({ children, className = '', intensity = 1 }: TiltCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null)
-  const [isHovered, setIsHovered] = useState(false)
-  const [isTouch, setIsTouch] = useState(false)
+export default function TiltCard({ children, className, intensity = 1 }: TiltCardProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const shouldReduceMotion = useReducedMotion()
+  const [isMobile, setIsMobile] = useState(false)
 
-  const shouldReduceMotion = useReducedMotion() ?? false
-
+  // Motion values for rotation
   const rotateX = useMotionValue(0)
   const rotateY = useMotionValue(0)
 
+  // Motion values for shine position
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+  const shineOpacity = useMotionValue(0)
+
+  // Spring configuration for smooth motion
   const springConfig = { stiffness: 150, damping: 20 }
-  const springRotateX = useSpring(rotateX, springConfig)
-  const springRotateY = useSpring(rotateY, springConfig)
+  const xSpring = useSpring(rotateX, springConfig)
+  const ySpring = useSpring(rotateY, springConfig)
 
-  const x = useMotionValue(0)
-  const y = useMotionValue(0)
-  const springX = useSpring(x, { stiffness: 150, damping: 20 })
-  const springY = useSpring(y, { stiffness: 150, damping: 20 })
+  // Shine follow effect
+  const shineX = useSpring(mouseX, springConfig)
+  const shineY = useSpring(mouseY, springConfig)
+  const shineAlpha = useSpring(shineOpacity, springConfig)
 
+  // Check for mobile on mount and resize
   useEffect(() => {
-    const checkTouch = () => {
-      setIsTouch(window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window)
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
     }
-    checkTouch()
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (shouldReduceMotion || isTouch) return
+    if (!containerRef.current || isMobile || shouldReduceMotion) return
 
-    const card = cardRef.current
-    if (!card) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const width = rect.width
+    const height = rect.height
 
-    const rect = card.getBoundingClientRect()
-    const centerX = rect.left + rect.width / 2
-    const centerY = rect.top + rect.height / 2
+    // Calculate relative mouse position (from -0.5 to 0.5)
+    const relativeX = (e.clientX - rect.left) / width - 0.5
+    const relativeY = (e.clientY - rect.top) / height - 0.5
 
-    const deltaX = e.clientX - centerX
-    const deltaY = e.clientY - centerY
+    // Map to rotation degrees (max 15 degrees * intensity)
+    rotateY.set(relativeX * 30 * intensity)
+    rotateX.set(-relativeY * 30 * intensity)
 
-    const maxRotation = 15 * intensity
-    const rotateXValue = (deltaY / (rect.height / 2)) * -maxRotation
-    const rotateYValue = (deltaX / (rect.width / 2)) * maxRotation
-
-    rotateX.set(rotateXValue)
-    rotateY.set(rotateYValue)
-
-    x.set(e.clientX - rect.left)
-    y.set(e.clientY - rect.top)
-  }
-
-  const handleMouseEnter = () => {
-    if (shouldReduceMotion || isTouch) return
-    setIsHovered(true)
+    // Update shine position (absolute coordinates within card)
+    mouseX.set(e.clientX - rect.left)
+    mouseY.set(e.clientY - rect.top)
+    shineOpacity.set(1)
   }
 
   const handleMouseLeave = () => {
-    if (shouldReduceMotion || isTouch) return
-    setIsHovered(false)
     rotateX.set(0)
     rotateY.set(0)
-    x.set(0)
-    y.set(0)
+    shineOpacity.set(0)
   }
 
-  const tiltDisabled = shouldReduceMotion || isTouch
+  // If mobile or reduced motion, just render children
+  if (isMobile || shouldReduceMotion) {
+    return <div className={className}>{children}</div>
+  }
 
   return (
-    <div
-      ref={cardRef}
+    <motion.div
+      ref={containerRef}
       onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={className}
       style={{
-        perspective: 1000,
+        perspective: '1000px',
+        transformStyle: 'preserve-3d',
         position: 'relative',
+        rotateX: xSpring,
+        rotateY: ySpring,
+      }}
+      whileHover={{
+        y: -8,
+        scale: 1.02,
+        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(230, 60, 47, 0.1)',
       }}
     >
+      {/* Shine Overlay */}
       <motion.div
         style={{
-          transformStyle: 'preserve-3d',
-          rotateX: tiltDisabled ? 0 : springRotateX,
-          rotateY: tiltDisabled ? 0 : springRotateY,
-          willChange: 'transform',
-          position: 'relative',
+          position: 'absolute',
+          inset: 0,
+          background: useTransform(
+            [shineX, shineY, shineAlpha],
+            ([x, y]) => `radial-gradient(circle at ${x}px ${y}px, rgba(255, 255, 255, 0.08) 0%, transparent 60%)`,
+          ),
+          opacity: shineAlpha,
+          pointerEvents: 'none',
+          zIndex: 10,
         }}
-      >
-        {/* Glossy shine overlay */}
-        {!tiltDisabled && (
-          <motion.div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              borderRadius: 'inherit',
-              background: `radial-gradient(
-                800px circle at ${tiltDisabled ? 50 : springX}px ${tiltDisabled ? 50 : springY}px,
-                rgba(255,255,255,0.08) 0%,
-                transparent 50%
-              )`,
-              pointerEvents: 'none',
-              opacity: isHovered ? 1 : 0,
-              transition: 'opacity 300ms ease',
-              zIndex: 1,
-            }}
-          />
-        )}
-
+      />
+      
+      {/* Content wrapper with transform-style to ensure nesting works with 3D */}
+      <div style={{ transform: 'translateZ(20px)', transformStyle: 'preserve-3d' }}>
         {children}
-
-        {/* Edge glow effect */}
-        <motion.div
-          style={{
-            position: 'absolute',
-            inset: -1,
-            borderRadius: 'inherit',
-            boxShadow: tiltDisabled
-              ? 'none'
-              : isHovered
-                ? '0 0 30px rgba(230,60,47,0.2)'
-                : 'none',
-            pointerEvents: 'none',
-            transition: 'box-shadow 300ms ease',
-            zIndex: -1,
-          }}
-        />
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   )
 }

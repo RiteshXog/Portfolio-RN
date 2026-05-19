@@ -1,12 +1,7 @@
-import { useEffect, useRef } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useRef, useState, useEffect } from 'react'
+import { motion, useInView, useReducedMotion, useSpring, useMotionValue, useTransform, AnimatePresence } from 'framer-motion'
 import { Code2, Layout, Palette, PenTool, Zap, Layers } from 'lucide-react'
 import TextReveal from '../components/ui/TextReveal'
-import TiltCard from '../components/ui/TiltCard'
-
-gsap.registerPlugin(ScrollTrigger)
 
 const services = [
   {
@@ -41,85 +36,307 @@ const services = [
   },
 ]
 
-function GlassCard({ children }: { children: React.ReactNode }) {
-  const shouldReduceMotion = useReducedMotion() ?? false
+// --- HELPER COMPONENTS & UTILS ---
+
+const GLITCH_CHARS = '!@#$%<>{}[]'
+
+function GlitchText({ text, start }: { text: string; start: boolean }) {
+  const [displayText, setDisplayText] = useState(text)
+  const intervalRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!start) return
+
+    let iteration = 0
+    const duration = 400
+    const intervalTime = 50
+    const maxIterations = duration / intervalTime
+
+    intervalRef.current = window.setInterval(() => {
+      setDisplayText((prev) =>
+        text
+          .split('')
+          .map((char, index) => {
+            if (index < iteration) return text[index]
+            return GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)]
+          })
+          .join('')
+      )
+
+      if (iteration >= text.length) {
+        if (intervalRef.current) clearInterval(intervalRef.current)
+      }
+
+      iteration += text.length / maxIterations
+    }, intervalTime)
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [start, text])
+
+  return <span>{displayText}</span>
+}
+
+function ExplodingIcon({ icon: Icon, isHovered }: { icon: any; isHovered: boolean }) {
+  const dots = Array.from({ length: 6 })
+
+  return (
+    <div className="relative inline-block">
+      <motion.div
+        animate={isHovered ? {
+          scale: [1, 1.4, 0.9, 1.1, 1],
+          color: ['#e63c2f', '#ff4d4d', '#e63c2f'],
+        } : { scale: 1, color: '#e63c2f' }}
+        transition={{ duration: 0.5, ease: 'easeInOut' }}
+      >
+        <Icon size={24} strokeWidth={1.5} aria-hidden="true" />
+      </motion.div>
+
+      <AnimatePresence>
+        {isHovered && dots.map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
+            animate={{
+              scale: [0, 1, 0],
+              opacity: [1, 1, 0],
+              x: Math.cos((i * 60 * Math.PI) / 180) * 20,
+              y: Math.sin((i * 60 * Math.PI) / 180) * 20,
+            }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="absolute top-1/2 left-1/2 w-1 h-1 bg-crimson rounded-full"
+            style={{ marginLeft: '-2px', marginTop: '-2px' }}
+          />
+        ))}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// --- MAIN COMPONENTS ---
+
+interface GlassCardProps {
+  icon: any
+  title: string
+  description: string
+  index: number
+}
+
+function GlassCard({ icon, title, description, index }: GlassCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const shouldReduceMotion = useReducedMotion()
+  const [isHovered, setIsHovered] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const isInView = useInView(cardRef, { once: true, amount: 0.3 })
+
+  // Mouse Tracking for Parallax & Shadow
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+
+  // Smooth Springs
+  const springX = useSpring(mouseX, { stiffness: 150, damping: 20 })
+  const springY = useSpring(mouseY, { stiffness: 150, damping: 20 })
+
+  // Layer Offsets
+  const layer1X = useTransform(springX, (val) => val * -0.05) // Opposite
+  const layer1Y = useTransform(springY, (val) => val * -0.05)
+  const layer2X = useTransform(springX, (val) => val * 0.15) // Toward
+  const layer2Y = useTransform(springY, (val) => val * 0.15)
+  const layer3X = useTransform(springX, (val) => val * 0.08) // Toward
+  const layer3Y = useTransform(springY, (val) => val * 0.08)
+
+  // Dynamic Shadow
+  const shadowX = useTransform(springX, (val) => -val * 0.15)
+  const shadowY = useTransform(springY, (val) => -val * 0.15)
+  const boxShadow = useTransform(
+    [shadowX, shadowY],
+    ([x, y]) => `${x}px ${y}px 30px rgba(230, 60, 47, ${isHovered ? 0.2 : 0})`
+  )
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isMobile || shouldReduceMotion || !cardRef.current) return
+    const rect = cardRef.current.getBoundingClientRect()
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    mouseX.set(e.clientX - centerX)
+    mouseY.set(e.clientY - centerY)
+  }
+
+  const handleMouseEnter = () => setIsHovered(true)
+  const handleMouseLeave = () => {
+    setIsHovered(false)
+    mouseX.set(0)
+    mouseY.set(0)
+  }
+
+  const formattedIndex = (index + 1).toString().padStart(2, '0')
+
+  const cardContent = (
+    <div className="relative w-full h-full flex flex-col p-8 overflow-hidden rounded-xl bg-[#ffffff08] backdrop-blur-lg border border-[#ffffff10] transition-colors duration-500 hover:border-transparent">
+      
+      {/* Liquid Border Layer */}
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-500"
+        style={{ 
+          opacity: isHovered && !isMobile && !shouldReduceMotion ? 1 : 0,
+          padding: '1px'
+        }}
+      >
+        <div 
+          className="w-full h-full rounded-xl border-2 border-crimson"
+          style={{ filter: 'url(#liquid-goo)' }}
+        />
+      </div>
+
+      {/* Holographic Shine Layer */}
+      <motion.div
+        className="absolute inset-0 z-1 pointer-events-none"
+        initial={{ backgroundPosition: '-200% 0' }}
+        animate={isHovered ? { backgroundPosition: '200% 0' } : { backgroundPosition: '-200% 0' }}
+        transition={{ duration: 0.6, ease: 'easeInOut' }}
+        style={{
+          background: 'linear-gradient(45deg, transparent, rgba(255,255,255,0.08), transparent)',
+          backgroundSize: '200% 100%',
+        }}
+      />
+
+      {/* Index (Layer 1 - Background) */}
+      <motion.span 
+        style={{ 
+          x: layer1X, 
+          y: layer1Y,
+          translateZ: '-10px'
+        }}
+        className="absolute top-6 right-8 font-mono text-4xl text-white/5 pointer-events-none will-change-transform z-2"
+      >
+        {formattedIndex}
+      </motion.span>
+
+      <div className="relative z-10 flex flex-col h-full" style={{ transformStyle: 'preserve-3d' }}>
+        
+        {/* Icon (Layer 2) */}
+        <motion.div 
+          style={{ x: layer2X, y: layer2Y, translateZ: '20px' }}
+          className="mb-6 will-change-transform"
+        >
+          <ExplodingIcon icon={icon} isHovered={isHovered} />
+        </motion.div>
+
+        {/* Text (Layer 3) */}
+        <motion.div 
+          style={{ x: layer3X, y: layer3Y, translateZ: '10px' }}
+          className="will-change-transform flex-1 flex flex-col"
+        >
+          <h3 className="font-display text-2xl text-cream mb-4 tracking-wide">
+            {isInView ? <GlitchText text={title} start={isInView} /> : title}
+          </h3>
+          <p className="font-mono text-base text-muted leading-relaxed">
+            {description}
+          </p>
+        </motion.div>
+      </div>
+    </div>
+  )
 
   return (
     <motion.div
-      whileHover={shouldReduceMotion ? {} : { translateY: -8, scale: 1.02 }}
-      transition={{ duration: 0.3 }}
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={{
-        background: 'rgba(255,255,255,0.03)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: '12px',
-        padding: '24px',
-        position: 'relative',
+        perspective: '800px',
         transformStyle: 'preserve-3d',
-        transition: 'border-color 300ms ease, box-shadow 300ms ease',
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
+        boxShadow: !isMobile && !shouldReduceMotion ? boxShadow : 'none',
       }}
-      className="glass-card"
+      className="relative h-full cursor-pointer will-change-transform"
     >
-      <style>{`
-        .glass-card:hover {
-          border-color: rgba(230,60,47,0.3);
-          box-shadow: inset 0 0 20px rgba(230,60,47,0.05);
-        }
-      `}</style>
-      {children}
+      {cardContent}
     </motion.div>
   )
 }
 
 export default function Services() {
-  const sectionRef = useRef<HTMLElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
-  const gridRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isInView = useInView(containerRef, { once: true, amount: 0.1 })
 
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return
-    }
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  }
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo(headerRef.current?.children || [], { y: 24, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.08, duration: 0.4, ease: 'cubic-bezier(0.22, 1, 0.36, 1)', scrollTrigger: { trigger: sectionRef.current, start: 'top 75%' } })
-      gsap.fromTo(gridRef.current?.children || [], { y: 24, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.08, duration: 0.4, ease: 'cubic-bezier(0.22, 1, 0.36, 1)', scrollTrigger: { trigger: gridRef.current, start: 'top 80%' } })
-    }, sectionRef)
-    return () => ctx.revert()
-  }, [])
+  const itemVariants = {
+    hidden: { y: 24, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
+  }
 
   return (
-    <section id="services" ref={sectionRef} className="relative py-[100px]" style={{ zIndex: 1 }}>
+    <section id="services" className="relative py-[120px] bg-void overflow-hidden" style={{ zIndex: 1 }}>
+      {/* SVG Liquid Filter Definition */}
+      <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
+        <defs>
+          <filter id="liquid-goo">
+            <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise">
+              <animate attributeName="baseFrequency" values="0.015;0.025;0.015" dur="4s" repeatCount="indefinite" />
+            </feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" />
+          </filter>
+        </defs>
+      </svg>
+
       <div className="max-w-[1400px] mx-auto px-6 lg:px-8">
-        <div ref={headerRef} className="mb-12">
+        <div className="mb-16">
           <p className="font-body text-xs uppercase tracking-[0.2em] text-crimson mb-4">
             <span className="mr-2">&#8592;</span>
             What I Do
           </p>
-          <TextReveal as="h2" text="Services" className="font-display text-cream text-shadow-glow" style={{ fontSize: 'clamp(36px, 5vw, 64px)' }} />
+          <TextReveal
+            as="h2"
+            text="Services"
+            className="font-display text-cream text-shadow-glow"
+            style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}
+          />
         </div>
 
-        <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
-          {services.map(({ icon: Icon, title, description }) => (
-            <TiltCard key={title} className="h-full">
-              <GlassCard>
-                <motion.div
-                  whileHover={{ translateZ: 20, scale: 1.1 }}
-                  transition={{ duration: 0.3 }}
-                  style={{ transformStyle: 'preserve-3d' }}
-                >
-                  <Icon size={24} className="text-crimson" strokeWidth={1.5} aria-hidden="true" />
-                </motion.div>
-                <h3 className="font-display text-lg text-cream mt-4 tracking-wide">{title}</h3>
-                <p className="font-mono text-base text-muted mt-3 leading-relaxed flex-1">{description}</p>
-              </GlassCard>
-            </TiltCard>
+        <motion.div
+          ref={containerRef}
+          variants={containerVariants}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch"
+        >
+          {services.map((service, index) => (
+            <motion.div key={service.title} variants={itemVariants} className="h-full">
+              <GlassCard 
+                icon={service.icon} 
+                title={service.title} 
+                description={service.description} 
+                index={index} 
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   )
