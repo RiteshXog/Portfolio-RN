@@ -1,34 +1,50 @@
-import { useRef, useState, useEffect } from 'react'
-import { motion, useInView, useReducedMotion, useSpring, useMotionValue, useTransform, AnimatePresence } from 'framer-motion'
-import { Github, ExternalLink, Code } from 'lucide-react'
-import { projects } from '../data/projects'
-import TiltCard from '../components/ui/TiltCard'
+import { useRef, useState, useEffect } from "react";
+import {
+  motion,
+  useInView,
+  useReducedMotion,
+  useSpring,
+  useMotionValue,
+  useTransform,
+  AnimatePresence,
+} from "framer-motion";
+import { Github, ExternalLink } from "lucide-react";
+import { projects } from "../data/projects";
+type Project = (typeof projects)[number];
 
 // --- HELPER COMPONENTS ---
 
-function TerminalPreview({ tech, isVisible }: { tech: string[]; isVisible: boolean }) {
-  const [typedLines, setTypedLines] = useState<string[]>([])
-  
+function TerminalPreview({
+  tech,
+  isVisible,
+}: {
+  tech: string[];
+  isVisible: boolean;
+}) {
+  const [typedLines, setTypedLines] = useState<string[]>([]);
+
   useEffect(() => {
     if (!isVisible) {
-      setTypedLines([])
-      return
+      setTypedLines([]);
+      return;
     }
 
-    let currentLine = 0
-    const lines = tech.map(t => `> install ${t.toLowerCase().replace(/\s+/g, '-')}`)
-    
+    let currentLine = 0;
+    const lines = tech.map(
+      (t) => `> install ${t.toLowerCase().replace(/\s+/g, "-")}`,
+    );
+
     const interval = setInterval(() => {
       if (currentLine < lines.length) {
-        setTypedLines(prev => [...prev, lines[currentLine]])
-        currentLine++
+        setTypedLines((prev) => [...prev, lines[currentLine]]);
+        currentLine++;
       } else {
-        clearInterval(interval)
+        clearInterval(interval);
       }
-    }, 100)
+    }, 100);
 
-    return () => clearInterval(interval)
-  }, [isVisible, tech])
+    return () => clearInterval(interval);
+  }, [isVisible, tech]);
 
   return (
     <AnimatePresence>
@@ -43,16 +59,18 @@ function TerminalPreview({ tech, isVisible }: { tech: string[]; isVisible: boole
             <div className="w-2 h-2 rounded-full bg-crimson/40" />
             <div className="w-2 h-2 rounded-full bg-crimson/20" />
             <div className="w-2 h-2 rounded-full bg-crimson/10" />
-            <span className="ml-2 font-mono text-[9px] text-crimson/60 uppercase tracking-widest">Stack.sh</span>
+            <span className="ml-2 font-mono text-[9px] text-crimson/60 uppercase tracking-widest">
+              Stack.sh
+            </span>
           </div>
           <div className="p-3 font-mono text-[10px] leading-relaxed">
-            {typedLines.map((line, i) => (
+            {typedLines.map((line: string, i: number) => (
               <div key={i} className="flex gap-2 mb-1">
                 <span className="text-crimson">$</span>
                 <span className="text-white/80">{line}</span>
               </div>
             ))}
-            <motion.div 
+            <motion.div
               animate={{ opacity: [1, 0] }}
               transition={{ repeat: Infinity, duration: 0.8 }}
               className="inline-block w-1.5 h-3 bg-crimson/60 align-middle ml-1"
@@ -61,7 +79,7 @@ function TerminalPreview({ tech, isVisible }: { tech: string[]; isVisible: boole
         </motion.div>
       )}
     </AnimatePresence>
-  )
+  );
 }
 
 function RGBDistortionImage({ isHovered }: { isHovered: boolean }) {
@@ -69,100 +87,113 @@ function RGBDistortionImage({ isHovered }: { isHovered: boolean }) {
     <div className="absolute inset-0 overflow-hidden rounded-xl opacity-20 pointer-events-none">
       {/* Background fill */}
       <div className="absolute inset-0 bg-void" />
-      
+
       {/* Red Layer */}
       <motion.div
         animate={isHovered ? { x: -3, opacity: 0.5 } : { x: 0, opacity: 0 }}
         className="absolute inset-0 bg-crimson mix-blend-screen"
-        style={{ filter: 'url(#displacement-warp)' }}
+        style={{ filter: "url(#displacement-warp)" }}
       />
-      
+
       {/* Blue Layer */}
       <motion.div
         animate={isHovered ? { x: 3, opacity: 0.5 } : { x: 0, opacity: 0 }}
         className="absolute inset-0 bg-[#0000ff] mix-blend-screen"
-        style={{ filter: 'url(#displacement-warp)' }}
+        style={{ filter: "url(#displacement-warp)" }}
       />
-      
+
       {/* Grid Pattern overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(230,60,47,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(230,60,47,0.1)_1px,transparent_1px)] bg-[size:20px_20px]" />
     </div>
-  )
+  );
 }
 
+
 function ProjectCard({ project, index }: { project: Project; index: number }) {
-  const cardRef = useRef<HTMLDivElement>(null)
-  const shouldReduceMotion = useReducedMotion()
-  const [isHovered, setIsHovered] = useState(false)
-  const [isFlipped, setIsFlipped] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const isInView = useInView(cardRef, { once: true, amount: 0.2 })
+  const cardRef = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const isInView = useInView(cardRef, { once: true, amount: 0.2 });
 
   // --- MAGNETIC PULL ---
-  const mouseX = useMotionValue(0)
-  const mouseY = useMotionValue(0)
-  const pullX = useSpring(mouseX, { stiffness: 150, damping: 15 })
-  const pullY = useSpring(mouseY, { stiffness: 150, damping: 15 })
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const pullX = useSpring(mouseX, { stiffness: 150, damping: 15 });
+  const pullY = useSpring(mouseY, { stiffness: 150, damping: 15 });
 
   // --- HOLOGRAPHIC & SHINE ---
-  const rotateAngle = useTransform(mouseX, [-200, 200], [0, 360])
-  const holoGradient = useTransform(rotateAngle, (angle) => 
-    `linear-gradient(${angle}deg, hsla(${angle}, 70%, 50%, 0.05) 0%, transparent 100%)`
-  )
-  const shineX = useSpring(useTransform(mouseX, [-200, 200], [-100, 100]), { stiffness: 100, damping: 20 })
-  const shineY = useSpring(useTransform(mouseY, [-200, 200], [-100, 100]), { stiffness: 100, damping: 20 })
+  const rotateAngle = useTransform(mouseX, [-200, 200], [0, 360]);
+  const holoGradient = useTransform(
+    rotateAngle,
+    (angle) =>
+      `linear-gradient(${angle}deg, hsla(${angle}, 70%, 50%, 0.05) 0%, transparent 100%)`,
+  );
+  const shineX = useSpring(useTransform(mouseX, [-200, 200], [-100, 100]), {
+    stiffness: 100,
+    damping: 20,
+  });
+  const shineY = useSpring(useTransform(mouseY, [-200, 200], [-100, 100]), {
+    stiffness: 100,
+    damping: 20,
+  });
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isMobile || shouldReduceMotion || !cardRef.current || isFlipped) return
-    const rect = cardRef.current.getBoundingClientRect()
-    const centerX = rect.left + rect.width / 2
-    const centerY = rect.top + rect.height / 2
-    
+    if (isMobile || shouldReduceMotion || !cardRef.current || isFlipped) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
     // Calculate distance from center
-    const dx = e.clientX - centerX
-    const dy = e.clientY - centerY
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    
+    const dx = e.clientX - centerX;
+    const dy = e.clientY - centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
     // Magnetic pull activation within 150px
     if (distance < 150) {
-      mouseX.set(dx * 0.1) // Max 15px pull
-      mouseY.set(dy * 0.1)
+      mouseX.set(dx * 0.1); // Max 15px pull
+      mouseY.set(dy * 0.1);
     } else {
-      mouseX.set(0)
-      mouseY.set(0)
+      mouseX.set(0);
+      mouseY.set(0);
     }
-  }
+  };
 
   const handleFlip = (e: React.MouseEvent) => {
     // Prevent flip if clicking links
-    if ((e.target as HTMLElement).closest('a')) return
-    setIsFlipped(!isFlipped)
-  }
+    if ((e.target as HTMLElement).closest("a")) return;
+    setIsFlipped(!isFlipped);
+  };
 
-  const formattedIndex = (index + 1).toString().padStart(2, '0')
+  const formattedIndex = (index + 1).toString().padStart(2, "0");
 
   return (
-    <div 
+    <div
       className="relative h-[450px] w-full"
-      style={{ perspective: '1200px' }}
+      style={{ perspective: "1200px" }}
     >
       <motion.div
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => { setIsHovered(false); mouseX.set(0); mouseY.set(0); }}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          mouseX.set(0);
+          mouseY.set(0);
+        }}
         onClick={handleFlip}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
         style={{
-          transformStyle: 'preserve-3d',
+          transformStyle: "preserve-3d",
           x: pullX,
           y: pullY,
         }}
@@ -171,14 +202,14 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       >
         {/* --- FRONT SIDE --- */}
         <motion.div
-          style={{ backfaceVisibility: 'hidden' }}
+          style={{ backfaceVisibility: "hidden" }}
           className="absolute inset-0 z-10 flex flex-col glass-panel rounded-2xl p-8 overflow-hidden bg-[#ffffff05] border border-white/10"
         >
           {/* Cinematic Reveal Mask */}
           <motion.div
-            initial={{ clipPath: 'inset(100% 0 0 0)' }}
-            animate={isInView ? { clipPath: 'inset(0% 0 0 0)' } : {}}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
+            initial={{ clipPath: "inset(100% 0 0 0)" }}
+            animate={isInView ? { clipPath: "inset(0% 0 0 0)" } : {}}
+            transition={{ duration: 0.8, ease: "easeOut" }}
             className="absolute inset-0 bg-crimson/5 z-0"
           />
 
@@ -197,17 +228,24 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             style={{
               background: useTransform(
                 [shineX, shineY],
-                ([x, y]) => `radial-gradient(circle 200px at ${50 + (x as number)}% ${50 + (y as number)}%, rgba(230, 60, 47, 0.1), transparent)`
+                ([x, y]) =>
+                  `radial-gradient(circle 200px at ${50 + (x as number)}% ${50 + (y as number)}%, rgba(230, 60, 47, 0.1), transparent)`,
               ),
               opacity: isHovered ? 1 : 0,
             }}
           />
 
           {/* Terminal Preview */}
-          <TerminalPreview tech={project.tech} isVisible={isHovered && !isFlipped} />
+          <TerminalPreview
+            tech={project.tech}
+            isVisible={isHovered && !isFlipped}
+          />
 
           {/* Project Content */}
-          <div className="relative z-10 flex flex-col h-full" style={{ transformStyle: 'preserve-3d' }}>
+          <div
+            className="relative z-10 flex flex-col h-full"
+            style={{ transformStyle: "preserve-3d" }}
+          >
             {/* Header Reveal */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
@@ -231,15 +269,24 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
             {/* Tech Stack - Badge Explosion */}
             <div className="flex flex-wrap gap-2 mt-8" role="list">
-              {project.tech.map((tech, i) => (
+              {project.tech.map((tech: string, i: number) => (
                 <motion.span
                   key={tech}
-                  animate={isHovered ? {
-                    x: Math.random() * 16 - 8,
-                    y: Math.random() * 16 - 8,
-                    rotate: Math.random() * 20 - 10,
-                  } : { x: 0, y: 0, rotate: 0 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 12, delay: i * 0.03 }}
+                  animate={
+                    isHovered
+                      ? {
+                          x: Math.random() * 16 - 8,
+                          y: Math.random() * 16 - 8,
+                          rotate: Math.random() * 20 - 10,
+                        }
+                      : { x: 0, y: 0, rotate: 0 }
+                  }
+                  transition={{
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 12,
+                    delay: i * 0.03,
+                  }}
                   className="font-mono text-xs text-muted/80 px-3 py-1.5 bg-white/5 rounded border border-white/5 backdrop-blur-sm"
                 >
                   {tech}
@@ -249,10 +296,10 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
             {/* Hint */}
             <div className="mt-8 flex justify-between items-end">
-               <span className="font-body text-[10px] uppercase tracking-widest text-crimson animate-pulse">
-                 Click to expand
-               </span>
-               {project.highlight && (
+              <span className="font-body text-[10px] uppercase tracking-widest text-crimson animate-pulse">
+                Click to expand
+              </span>
+              {project.highlight && (
                 <span className="text-[10px] uppercase tracking-widest text-crimson/80 border border-crimson/30 px-2 py-1 rounded">
                   Featured
                 </span>
@@ -263,15 +310,15 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
         {/* --- BACK SIDE --- */}
         <motion.div
-          style={{ 
-            backfaceVisibility: 'hidden',
+          style={{
+            backfaceVisibility: "hidden",
             rotateY: 180,
           }}
           className="absolute inset-0 z-10 flex flex-col items-center justify-center glass-panel rounded-2xl p-10 bg-[#0A0A0A] border border-crimson/40"
         >
           <div className="absolute top-0 left-0 w-full h-full bg-radial-at-t from-crimson/10 to-transparent pointer-events-none" />
-          
-          <motion.span 
+
+          <motion.span
             className="font-display text-[120px] leading-none text-crimson opacity-20 select-none"
             initial={{ scale: 0.8 }}
             animate={isFlipped ? { scale: 1 } : { scale: 0.8 }}
@@ -280,11 +327,13 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           </motion.span>
 
           <div className="mt-4 text-center max-w-xs">
-            <h4 className="font-display text-2xl text-cream mb-4">{project.title}</h4>
+            <h4 className="font-display text-2xl text-cream mb-4">
+              {project.title}
+            </h4>
             <p className="font-mono text-sm text-muted mb-10 italic opacity-80 line-clamp-2">
               {project.description}
             </p>
-            
+
             <div className="flex flex-col gap-4 w-full">
               {project.demo && (
                 <a
@@ -317,11 +366,11 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         </motion.div>
       </motion.div>
     </div>
-  )
+  );
 }
 
 export default function Projects() {
-  const sectionRef = useRef<HTMLElement>(null)
+  const sectionRef = useRef<HTMLElement>(null);
 
   return (
     <section
@@ -334,8 +383,18 @@ export default function Projects() {
       <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
         <defs>
           <filter id="displacement-warp">
-            <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise">
-              <animate attributeName="baseFrequency" values="0.01;0.05;0.01" dur="10s" repeatCount="indefinite" />
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.01"
+              numOctaves="3"
+              result="noise"
+            >
+              <animate
+                attributeName="baseFrequency"
+                values="0.01;0.05;0.01"
+                dur="10s"
+                repeatCount="indefinite"
+              />
             </feTurbulence>
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" />
           </filter>
@@ -351,7 +410,7 @@ export default function Projects() {
           </p>
           <h2
             className="font-display text-cream text-shadow-glow"
-            style={{ fontSize: 'clamp(44px, 7vw, 90px)' }}
+            style={{ fontSize: "clamp(44px, 7vw, 90px)" }}
           >
             Projects
           </h2>
@@ -365,5 +424,5 @@ export default function Projects() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
+import type { Variants } from "framer-motion";
 import { motion, useInView, useReducedMotion, useSpring, useMotionValue, useTransform, AnimatePresence } from 'framer-motion'
 import { Code2, Layout, Palette, PenTool, Zap, Layers } from 'lucide-react'
 import TextReveal from '../components/ui/TextReveal'
@@ -53,10 +54,10 @@ function GlitchText({ text, start }: { text: string; start: boolean }) {
     const maxIterations = duration / intervalTime
 
     intervalRef.current = window.setInterval(() => {
-      setDisplayText((prev) =>
+      setDisplayText(() =>
         text
           .split('')
-          .map((char, index) => {
+          .map((_, index) => {
             if (index < iteration) return text[index]
             return GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)]
           })
@@ -279,14 +280,13 @@ export default function Services() {
     },
   }
 
-  const itemVariants = {
+  const itemVariants: Variants= {
     hidden: { y: 24, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
       transition: {
         duration: 0.6,
-        ease: [0.22, 1, 0.36, 1],
       },
     },
   }
