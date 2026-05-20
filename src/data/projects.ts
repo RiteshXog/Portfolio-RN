@@ -52,5 +52,5 @@ export const socialLinks = {
   github: 'https://github.com/RiteshXog',
   linkedin: 'https://www.linkedin.com/in/ritesh-naik-5b9370409/',
   email: 'mailto:hsetirkian777@gmail.com',
-  twitter: 'https://twitter.com/ritesh_codes',
+  twitter: 'https://x.com/RiteshNaik_07',
 }
