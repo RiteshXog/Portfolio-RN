@@ -1,0 +1,1 @@
+const i={type:"spring",stiffness:100,damping:20},s={hidden:{y:20,opacity:0},visible:{y:0,opacity:1,transition:i}},n={hidden:{},visible:{transition:{staggerChildren:.06,delayChildren:.1}}};export{s as f,n as s};
