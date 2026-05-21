@@ -22,9 +22,10 @@ function TerminalPreview({
   isVisible: boolean;
 }) {
   const [typedLines, setTypedLines] = useState<string[]>([]);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   useEffect(() => {
-    if (!isVisible) {
+    if (!isVisible || isMobile) {
       setTypedLines([]);
       return;
     }
@@ -83,6 +84,8 @@ function TerminalPreview({
 }
 
 function RGBDistortionImage({ isHovered }: { isHovered: boolean }) {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  if (isMobile) return null;
   return (
     <div className="absolute inset-0 overflow-hidden rounded-xl opacity-20 pointer-events-none">
       {/* Background fill */}
@@ -138,6 +141,12 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
     stiffness: 100,
     damping: 20,
   });
+
+  const spotlightBackground = useTransform(
+    [shineX, shineY],
+    ([x, y]) =>
+      `radial-gradient(circle 200px at ${50 + (x as number)}% ${50 + (y as number)}%, rgba(230, 60, 47, 0.1), transparent)`,
+  );
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -205,35 +214,37 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           style={{ backfaceVisibility: "hidden" }}
           className="absolute inset-0 z-10 flex flex-col glass-panel rounded-2xl p-8 overflow-hidden bg-[#ffffff05] border border-white/10"
         >
-          {/* Cinematic Reveal Mask */}
-          <motion.div
-            initial={{ clipPath: "inset(100% 0 0 0)" }}
-            animate={isInView ? { clipPath: "inset(0% 0 0 0)" } : {}}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="absolute inset-0 bg-crimson/5 z-0"
-          />
+          {/* Cinematic Reveal Mask - hidden on mobile */}
+          {!isMobile && (
+            <motion.div
+              initial={{ clipPath: "inset(100% 0 0 0)" }}
+              animate={isInView ? { clipPath: "inset(0% 0 0 0)" } : {}}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="absolute inset-0 bg-crimson/5 z-0"
+            />
+          )}
 
           {/* RGB Distortion Layer */}
           <RGBDistortionImage isHovered={isHovered} />
 
-          {/* Holographic Sheen Layer */}
-          <motion.div
-            className="absolute inset-0 z-1 pointer-events-none opacity-40"
-            style={{ background: holoGradient }}
-          />
+          {/* Holographic Sheen Layer - hidden on mobile */}
+          {!isMobile && (
+            <motion.div
+              className="absolute inset-0 z-1 pointer-events-none opacity-40"
+              style={{ background: holoGradient }}
+            />
+          )}
 
-          {/* Spotlight Layer */}
-          <motion.div
-            className="absolute inset-0 z-2 pointer-events-none"
-            style={{
-              background: useTransform(
-                [shineX, shineY],
-                ([x, y]) =>
-                  `radial-gradient(circle 200px at ${50 + (x as number)}% ${50 + (y as number)}%, rgba(230, 60, 47, 0.1), transparent)`,
-              ),
-              opacity: isHovered ? 1 : 0,
-            }}
-          />
+          {/* Spotlight Layer - hidden on mobile */}
+          {!isMobile && (
+            <motion.div
+              className="absolute inset-0 z-2 pointer-events-none"
+              style={{
+                background: spotlightBackground,
+                opacity: isHovered ? 1 : 0,
+              }}
+            />
+          )}
 
           {/* Terminal Preview */}
           <TerminalPreview
@@ -244,13 +255,13 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           {/* Project Content */}
           <div
             className="relative z-10 flex flex-col h-full"
-            style={{ transformStyle: "preserve-3d" }}
+            style={{ transformStyle: isMobile ? "flat" : "preserve-3d" }}
           >
             {/* Header Reveal */}
             <motion.div
-              initial={{ y: 20, opacity: 0 }}
+              initial={isMobile ? { opacity: 0 } : { y: 20, opacity: 0 }}
               animate={isInView ? { y: 0, opacity: 1 } : {}}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: isMobile ? 0.2 : 0.6, delay: isMobile ? 0.1 : 0.2 }}
             >
               <h3 className="font-display text-3xl text-cream tracking-wide group-hover:text-crimson transition-colors duration-300">
                 {project.title}
@@ -261,19 +272,19 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <motion.p
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ duration: isMobile ? 0.2 : 0.6, delay: isMobile ? 0.2 : 0.4 }}
               className="font-mono text-base text-muted mt-6 leading-relaxed flex-1 line-clamp-4"
             >
               {project.description}
             </motion.p>
 
-            {/* Tech Stack - Badge Explosion */}
+            {/* Tech Stack - Badge Explosion (disabled on mobile) */}
             <div className="flex flex-wrap gap-2 mt-8" role="list">
               {project.tech.map((tech: string, i: number) => (
                 <motion.span
                   key={tech}
                   animate={
-                    isHovered
+                    isHovered && !isMobile
                       ? {
                           x: Math.random() * 16 - 8,
                           y: Math.random() * 16 - 8,
@@ -371,6 +382,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
 export default function Projects() {
   const sectionRef = useRef<HTMLElement>(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   return (
     <section
@@ -379,27 +391,29 @@ export default function Projects() {
       className="relative py-[140px] bg-void overflow-hidden"
       style={{ zIndex: 1 }}
     >
-      {/* SVG Filters for distortion */}
-      <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
-        <defs>
-          <filter id="displacement-warp">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.01"
-              numOctaves="3"
-              result="noise"
-            >
-              <animate
-                attributeName="baseFrequency"
-                values="0.01;0.05;0.01"
-                dur="10s"
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" />
-          </filter>
-        </defs>
-      </svg>
+      {/* SVG Filters for distortion - hidden on mobile */}
+      {!isMobile && (
+        <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
+          <defs>
+            <filter id="displacement-warp">
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="0.01"
+                numOctaves="3"
+                result="noise"
+              >
+                <animate
+                  attributeName="baseFrequency"
+                  values="0.01;0.05;0.01"
+                  dur="10s"
+                  repeatCount="indefinite"
+                />
+              </feTurbulence>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" />
+            </filter>
+          </defs>
+        </svg>
+      )}
 
       <div className="max-w-[1400px] mx-auto px-6 lg:px-8">
         {/* Header */}

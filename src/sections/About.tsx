@@ -12,14 +12,15 @@ export default function About() {
   const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const isMobile = window.innerWidth < 768
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return
     }
 
     const ctx = gsap.context(() => {
-      gsap.fromTo(imageRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'cubic-bezier(0.22, 1, 0.36, 1)', scrollTrigger: { trigger: sectionRef.current, start: 'top 70%' } })
+      gsap.fromTo(imageRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: isMobile ? 0.2 : 0.4, ease: 'power2.out', scrollTrigger: { trigger: sectionRef.current, start: 'top 80%' } })
 
-      gsap.fromTo(contentRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, delay: 0.08, ease: 'cubic-bezier(0.22, 1, 0.36, 1)', scrollTrigger: { trigger: sectionRef.current, start: 'top 70%' } })
+      gsap.fromTo(contentRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: isMobile ? 0.2 : 0.4, delay: isMobile ? 0 : 0.08, ease: 'power2.out', scrollTrigger: { trigger: sectionRef.current, start: 'top 80%' } })
     }, sectionRef)
 
     return () => ctx.revert()
@@ -41,8 +42,9 @@ export default function About() {
                 height="500"
                 className="w-full h-full object-cover"
                 loading="lazy"
+                fetchPriority="low"
                 decoding="async"
-                style={{ filter: 'brightness(0.8) contrast(1.1)' }}
+                style={{ filter: window.innerWidth < 768 ? 'none' : 'brightness(0.8) contrast(1.1)' }}
               />
               <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, transparent 30%, rgba(183, 75, 75, 0.2) 60%)' }} />
             </div>

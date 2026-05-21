@@ -5,6 +5,7 @@ export default function PlasmaCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    if (window.innerWidth < 768) return
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -219,6 +220,8 @@ export default function PlasmaCanvas() {
       renderer.dispose()
     }
   }, [])
+
+  if (typeof window !== 'undefined' && window.innerWidth < 768) return null
 
   return (
     <canvas

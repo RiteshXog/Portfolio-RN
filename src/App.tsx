@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Lenis from 'lenis'
 import gsap from 'gsap'
@@ -6,14 +6,16 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import LoadingScreen from './components/ui/LoadingScreen'
 import Marquee from './components/ui/Marquee'
 import StatsCounter from './components/ui/StatsCounter'
-import Nav from './sections/Nav'
-import Hero from './sections/Hero'
-import About from './sections/About'
-import Projects from './sections/Projects'
-import Services from './sections/Services'
-import CTABanner from './sections/CTABanner'
-import Contact from './sections/Contact'
-import Footer from './sections/Footer'
+
+// Lazy load sections
+const Nav = lazy(() => import('./sections/Nav'))
+const Hero = lazy(() => import('./sections/Hero'))
+const About = lazy(() => import('./sections/About'))
+const Projects = lazy(() => import('./sections/Projects'))
+const Services = lazy(() => import('./sections/Services'))
+const CTABanner = lazy(() => import('./sections/CTABanner'))
+const Contact = lazy(() => import('./sections/Contact'))
+const Footer = lazy(() => import('./sections/Footer'))
 
 import AtmosphericBackground from './components/AtmosphericBackground'
 import CustomCursor from './components/CustomCursor'
@@ -26,28 +28,44 @@ gsap.registerPlugin(ScrollTrigger)
 export default function App() {
   const lenisRef = useRef<Lenis | null>(null)
   const [isLoadingComplete, setIsLoadingComplete] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      touchMultiplier: 2,
-    })
-    lenisRef.current = lenis
-
-    lenis.on('scroll', ScrollTrigger.update)
-
-    gsap.ticker.add((time) => {
-      lenis.raf(time * 1000)
-    })
-    gsap.ticker.lagSmoothing(0)
-
-    return () => {
-      lenis.destroy()
-      gsap.ticker.remove((time) => {
-        lenis.raf(time * 1000)
-      })
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      return mobile
     }
+    
+    const mobile = checkMobile()
+    window.addEventListener('resize', checkMobile)
+
+    if (!mobile) {
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        touchMultiplier: 2,
+        smoothTouch: false, // Disable smooth scroll on touch for performance
+      })
+      lenisRef.current = lenis
+
+      lenis.on('scroll', ScrollTrigger.update)
+
+      const updateLenis = (time: number) => {
+        lenis.raf(time * 1000)
+      }
+
+      gsap.ticker.add(updateLenis)
+      gsap.ticker.lagSmoothing(0)
+
+      return () => {
+        lenis.destroy()
+        gsap.ticker.remove(updateLenis)
+        window.removeEventListener('resize', checkMobile)
+      }
+    }
+
+    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
   const handleLoadingComplete = () => {
@@ -77,28 +95,32 @@ export default function App() {
         <CustomCursor />
 
         {/* Navigation - staggered reveal after content starts */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: isLoadingComplete ? 1 : 0, y: isLoadingComplete ? 0 : -20 }}
-          transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
-        >
-          <Nav />
-        </motion.div>
+        <Suspense fallback={null}>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: isLoadingComplete ? 1 : 0, y: isLoadingComplete ? 0 : -20 }}
+            transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+          >
+            <Nav />
+          </motion.div>
+        </Suspense>
 
         {/* Section indicators - fixed right side dots */}
         <SectionIndicator />
 
         {/* Page content */}
         <main className="relative" style={{ zIndex: 1 }}>
-          <Hero />
-          <Marquee />
-          <About />
-          <StatsCounter />
-          <Services />
-          <Projects />
-          <CTABanner />
-          <Contact />
-          <Footer />
+          <Suspense fallback={<div className="h-screen bg-void" />}>
+            <Hero />
+            <Marquee />
+            <About />
+            <StatsCounter />
+            <Services />
+            <Projects />
+            <CTABanner />
+            <Contact />
+            <Footer />
+          </Suspense>
         </main>
 
         {/* Back to top button */}

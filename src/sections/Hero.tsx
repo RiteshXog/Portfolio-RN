@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Linkedin, Github, Twitter } from "lucide-react";
 import { socialLinks } from "../data/projects";
@@ -15,8 +15,33 @@ const socialItems = [
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const shouldReduceMotion = useReducedMotion() ?? false;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const greetingWords = ["To", "be", "a", "Software", "Developer"];
+
+  // Mobile optimized variants
+  const mobileFadeUp = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { duration: 0.2, ease: "easeOut" } 
+    }
+  };
+
+  const mobileStagger = {
+    visible: { transition: { staggerChildren: 0.05 } }
+  };
+
+  const variants = isMobile ? mobileFadeUp : fadeUp;
+  const staggerVariants = isMobile ? mobileStagger : stagger;
 
   return (
     <section
@@ -34,14 +59,14 @@ export default function Hero() {
               className="flex flex-wrap gap-2 mb-4"
               aria-label="To be a Software Developer"
               role="text"
-              variants={shouldReduceMotion ? {} : stagger}
+              variants={shouldReduceMotion ? {} : staggerVariants}
               initial="hidden"
               animate="visible"
             >
               {greetingWords.map((word, i) => (
                 <motion.span
                   key={i}
-                  variants={shouldReduceMotion ? {} : fadeUp}
+                  variants={shouldReduceMotion ? {} : variants}
                   className="font-body text-xs uppercase tracking-[0.2em] text-crimson"
                 >
                   {word}
@@ -71,7 +96,7 @@ export default function Hero() {
 
             <motion.p
               className="font-mono text-base text-muted mt-6 max-w-md leading-relaxed"
-              variants={shouldReduceMotion ? {} : fadeUp}
+              variants={shouldReduceMotion ? {} : variants}
               initial="hidden"
               animate="visible"
             >
@@ -85,9 +110,9 @@ export default function Hero() {
               className="inline-flex items-center gap-2 mt-6 px-3 py-1.5 rounded-full"
               style={{
                 background: "rgba(230,60,47,0.1)",
-                backdropFilter: "blur(8px)",
+                backdropFilter: isMobile ? "none" : "blur(8px)",
               }}
-              variants={shouldReduceMotion ? {} : fadeUp}
+              variants={shouldReduceMotion ? {} : variants}
               initial="hidden"
               animate="visible"
             >
@@ -95,15 +120,17 @@ export default function Hero() {
                 {/* Static ring */}
                 <div className="w-2 h-2 rounded-full bg-green-500" />
                 {/* Pulse ring */}
-                <motion.div
-                  className="absolute inset-0 rounded-full border border-green-500"
-                  animate={{ scale: [1, 2.5], opacity: [1, 0] }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeOut",
-                  }}
-                />
+                {!isMobile && (
+                  <motion.div
+                    className="absolute inset-0 rounded-full border border-green-500"
+                    animate={{ scale: [1, 2.5], opacity: [1, 0] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeOut",
+                    }}
+                  />
+                )}
               </div>
               <span className="font-body text-[10px] uppercase tracking-[0.15em] text-green-400">
                 Open to Work
@@ -112,7 +139,7 @@ export default function Hero() {
 
             <motion.div
               className="mt-8"
-              variants={shouldReduceMotion ? {} : fadeUp}
+              variants={shouldReduceMotion ? {} : variants}
               initial="hidden"
               animate="visible"
             >
@@ -132,7 +159,7 @@ export default function Hero() {
               className="flex items-center gap-4 mt-8"
               role="list"
               aria-label="Social links"
-              variants={shouldReduceMotion ? {} : stagger}
+              variants={shouldReduceMotion ? {} : staggerVariants}
               initial="hidden"
               animate="visible"
             >
@@ -144,7 +171,7 @@ export default function Hero() {
                   rel="noopener noreferrer"
                   aria-label={label}
                   className="w-10 h-10 rounded-full border border-white/15 flex items-center justify-center text-muted transition-all duration-300 hover:btn-gradient hover:text-void hover:border-transparent hover:scale-110"
-                  variants={shouldReduceMotion ? {} : fadeUp}
+                  variants={shouldReduceMotion ? {} : variants}
                 >
                   <Icon size={18} />
                 </motion.a>
@@ -158,37 +185,41 @@ export default function Hero() {
               className="relative"
               style={{ maxWidth: "380px", width: "100%" }}
             >
-              {/* SVG border trace */}
-              <svg
-                className="absolute inset-0 w-full h-full pointer-events-none"
-                style={{ zIndex: 2 }}
-              >
-                <motion.rect
-                  x="2"
-                  y="2"
-                  width="calc(100% - 4px)"
-                  height="calc(100% - 4px)"
-                  fill="none"
-                  stroke="#b74b4b"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeDasharray="1000"
-                  strokeDashoffset="1000"
-                  rx="12"
-                  initial={{ strokeDashoffset: 1000 }}
-                  animate={{ strokeDashoffset: 0 }}
-                  transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-                />
-              </svg>
+              {/* SVG border trace - hidden on mobile */}
+              {!isMobile && (
+                <svg
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  style={{ zIndex: 2 }}
+                >
+                  <motion.rect
+                    x="2"
+                    y="2"
+                    width="calc(100% - 4px)"
+                    height="calc(100% - 4px)"
+                    fill="none"
+                    stroke="#b74b4b"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeDasharray="1000"
+                    strokeDashoffset="1000"
+                    rx="12"
+                    initial={{ strokeDashoffset: 1000 }}
+                    animate={{ strokeDashoffset: 0 }}
+                    transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                </svg>
+              )}
 
-              {/* Glow */}
-              <div
-                className="absolute inset-0 rounded-lg blur-[60px] opacity-30"
-                style={{
-                  background:
-                    "radial-gradient(circle, rgba(183, 75, 75, 0.5) 0%, transparent 70%)",
-                }}
-              />
+              {/* Glow - hidden on mobile */}
+              {!isMobile && (
+                <div
+                  className="absolute inset-0 rounded-lg blur-[60px] opacity-30"
+                  style={{
+                    background:
+                      "radial-gradient(circle, rgba(183, 75, 75, 0.5) 0%, transparent 70%)",
+                  }}
+                />
+              )}
 
               {/* Image container */}
               <div
@@ -203,19 +234,22 @@ export default function Hero() {
                   height="506"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   fetchPriority="high"
+                  loading="lazy"
                   decoding="async"
-                  style={{ filter: "brightness(0.85) contrast(1.05)" }}
+                  style={{ filter: isMobile ? "none" : "brightness(0.85) contrast(1.05)" }}
                 />
 
-                {/* Chromatic aberration */}
-                <div
-                  className="absolute inset-0 opacity-0 group-hover:opacity-10 pointer-events-none transition-opacity duration-300"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, rgba(255,0,0,0.3) 0%, transparent 50%, rgba(0,0,255,0.3) 100%)",
-                    mixBlendMode: "screen",
-                  }}
-                />
+                {/* Chromatic aberration - hidden on mobile */}
+                {!isMobile && (
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-10 pointer-events-none transition-opacity duration-300"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, rgba(255,0,0,0.3) 0%, transparent 50%, rgba(0,0,255,0.3) 100%)",
+                      mixBlendMode: "screen",
+                    }}
+                  />
+                )}
 
                 <div
                   className="absolute inset-0"

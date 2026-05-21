@@ -16,7 +16,8 @@ const stats: Stat[] = [
 
 // Particle burst component
 function ParticleBurst({ show }: { show: boolean }) {
-  if (!show) return null
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  if (!show || isMobile) return null
 
   const particles = Array.from({ length: 6 })
 
@@ -67,6 +68,7 @@ function AnimatedNumber({
   const hasTriggeredComplete = useRef(false)
 
   useEffect(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
     if (reducedMotion) {
       setDisplayValue(value)
       return
@@ -75,7 +77,7 @@ function AnimatedNumber({
     if (!inView) return
 
     let startTime: number
-    const duration = 2000
+    const duration = isMobile ? 1000 : 2000
 
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp
@@ -89,10 +91,12 @@ function AnimatedNumber({
         // Count finished - trigger glitch and particles
         if (!hasTriggeredComplete.current) {
           hasTriggeredComplete.current = true
-          setShowGlitch(true)
-          setShowParticles(true)
-          setTimeout(() => setShowGlitch(false), 200)
-          setTimeout(() => setShowParticles(false), 600)
+          if (!isMobile) {
+            setShowGlitch(true)
+            setShowParticles(true)
+            setTimeout(() => setShowGlitch(false), 200)
+            setTimeout(() => setShowParticles(false), 600)
+          }
           onComplete?.()
         }
       }
@@ -116,7 +120,8 @@ function AnimatedNumber({
 
 export default function StatsCounter() {
   const sectionRef = useRef<HTMLElement>(null)
-  const isInView = useInView(sectionRef, { once: true, margin: '-100px' })
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const isInView = useInView(sectionRef, { once: true, margin: isMobile ? '-50px' : '-100px' })
   const shouldReduceMotion = useReducedMotion() ?? false
 
   return (
@@ -163,10 +168,10 @@ export default function StatsCounter() {
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              whileHover={{ backgroundColor: 'rgba(230,60,47,0.04)' }}
+              whileHover={isMobile ? {} : { backgroundColor: 'rgba(230,60,47,0.04)' }}
               transition={{
-                duration: 0.6,
-                delay: shouldReduceMotion ? 0 : index * 0.2,
+                duration: isMobile ? 0.3 : 0.6,
+                delay: shouldReduceMotion || isMobile ? 0 : index * 0.2,
                 ease: 'easeOut',
               }}
               className="stat-card"
@@ -180,23 +185,25 @@ export default function StatsCounter() {
               }}
             >
               {/* Background glow - depth effect */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: 200,
-                  height: 100,
-                  background: 'radial-gradient(ellipse, rgba(183,75,75,0.03) 0%, transparent 70%)',
-                  pointerEvents: 'none',
-                  transition: 'opacity 300ms ease',
-                }}
-                className="stat-glow"
-              />
+              {!isMobile && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 200,
+                    height: 100,
+                    background: 'radial-gradient(ellipse, rgba(183,75,75,0.03) 0%, transparent 70%)',
+                    pointerEvents: 'none',
+                    transition: 'opacity 300ms ease',
+                  }}
+                  className="stat-glow"
+                />
+              )}
 
               <motion.div
-                whileHover={{ scale: 1.05 }}
+                whileHover={isMobile ? {} : { scale: 1.05 }}
                 transition={{ duration: 0.3 }}
                 style={{
                   fontFamily: 'Bebas Neue, sans-serif',

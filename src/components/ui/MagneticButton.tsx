@@ -23,6 +23,7 @@ export default function MagneticButton({
   const buttonRef = useRef<HTMLButtonElement>(null)
   const shouldReduceMotion = useReducedMotion()
   const [isTouch, setIsTouch] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   const x = useMotionValue(0)
   const y = useMotionValue(0)
@@ -32,14 +33,17 @@ export default function MagneticButton({
   const springY = useSpring(y, springConfig)
 
   useEffect(() => {
-    const checkTouch = () => {
+    const checkDevice = () => {
       setIsTouch(window.matchMedia('(hover: none)').matches || 'ontouchstart' in window)
+      setIsMobile(window.innerWidth < 768)
     }
-    checkTouch()
+    checkDevice()
+    window.addEventListener('resize', checkDevice)
+    return () => window.removeEventListener('resize', checkDevice)
   }, [])
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (shouldReduceMotion || disabled || isTouch) return
+    if (shouldReduceMotion || disabled || isTouch || isMobile) return
 
     const button = buttonRef.current
     if (!button) return
@@ -61,7 +65,7 @@ export default function MagneticButton({
   }
 
   const handleMouseLeave = () => {
-    if (shouldReduceMotion || disabled || isTouch) return
+    if (shouldReduceMotion || disabled || isTouch || isMobile) return
     x.set(0)
     y.set(0)
   }
@@ -76,7 +80,7 @@ export default function MagneticButton({
       aria-label={ariaLabel}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      style={{ x: springX, y: springY }}
+      style={{ x: isMobile ? 0 : springX, y: isMobile ? 0 : springY }}
     >
       {children}
     </motion.button>

@@ -11,7 +11,8 @@ interface TextRevealProps {
 
 export default function TextReveal({ text, className = '', delay = 0, as: Tag = 'p', style }: TextRevealProps) {
   const ref = useRef<HTMLHeadingElement | HTMLParagraphElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const isInView = useInView(ref, { once: true, margin: isMobile ? '-50px' : '-100px' })
   const shouldReduceMotion = useReducedMotion()
 
   const words = text.split(' ')
@@ -20,7 +21,7 @@ export default function TextReveal({ text, className = '', delay = 0, as: Tag = 
     hidden: {},
     visible: {
       transition: {
-        staggerChildren: 0.06,
+        staggerChildren: isMobile ? 0 : 0.06,
         delayChildren: delay,
       },
     },
@@ -28,15 +29,15 @@ export default function TextReveal({ text, className = '', delay = 0, as: Tag = 
 
   const wordVariants: Variants = {
     hidden: {
-      y: '100%',
+      y: isMobile ? 10 : '100%',
       opacity: 0,
     },
     visible: {
       y: 0,
       opacity: 1,
       transition: {
-        duration: 0.6,
-        ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+        duration: isMobile ? 0.2 : 0.6,
+        ease: isMobile ? 'easeOut' : [0.22, 1, 0.36, 1] as [number, number, number, number],
       },
     },
   }

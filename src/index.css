@@ -23,7 +23,7 @@
     @apply bg-void text-cream;
     font-family: "JetBrains Mono", monospace;
     font-weight: 300;
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1.7;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -73,6 +73,28 @@
 
   *:focus:not(:focus-visible) {
     outline: none;
+  }
+
+  @media (max-width: 768px) {
+    * {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      box-shadow: none !important;
+      will-change: auto !important;
+    }
+
+    section {
+      contain: layout;
+    }
+
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .text-shadow-glow {
+      text-shadow: none !important;
+    }
   }
 }
 

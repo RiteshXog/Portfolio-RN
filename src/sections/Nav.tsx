@@ -17,7 +17,15 @@ export default function Nav() {
   const scrollY = useScrollY()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('home')
+  const [isMobile, setIsMobile] = useState(false)
   const shouldReduceMotion = useReducedMotion() ?? false
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Dynamic transparency based on scroll
   const opacity = Math.min(scrollY / 100, 0.92)
@@ -59,10 +67,10 @@ export default function Nav() {
         className="fixed top-0 left-0 w-full z-50"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: translateY, opacity: 1 }}
-        transition={shouldReduceMotion ? { duration: 0.1 } : { type: 'spring', stiffness: 100, damping: 20 }}
+        transition={shouldReduceMotion || isMobile ? { duration: 0.2 } : { type: 'spring', stiffness: 100, damping: 20 }}
         style={{
           background: `rgba(10, 10, 10, ${opacity})`,
-          backdropFilter: scrollY > 20 ? 'blur(20px)' : 'none',
+          backdropFilter: scrollY > 20 && !isMobile ? 'blur(20px)' : 'none',
           borderBottom: showBorder ? '1px solid rgba(255,255,255,0.05)' : 'none',
         }}
         role="navigation"
@@ -123,17 +131,17 @@ export default function Nav() {
           <motion.div
             id="mobile-menu"
             className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-6 md:hidden"
-            style={{ background: 'rgba(10, 10, 10, 0.98)', backdropFilter: 'blur(10px)' }}
+            style={{ background: 'rgba(10, 10, 10, 0.98)', backdropFilter: isMobile ? 'none' : 'blur(10px)' }}
             role="dialog"
             aria-modal="true"
             aria-label="Mobile navigation menu"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.1 }}
+            transition={{ duration: 0.15 }}
           >
             <motion.div
-              variants={shouldReduceMotion ? {} : stagger}
+              variants={shouldReduceMotion || isMobile ? {} : stagger}
               initial="hidden"
               animate="visible"
             >
@@ -143,7 +151,10 @@ export default function Nav() {
                   href={item.href}
                   onClick={(e) => handleNavClick(e, item.href)}
                   className="font-display text-2xl text-muted hover:text-crimson px-4 py-2 transition-colors block"
-                  variants={shouldReduceMotion ? {} : fadeUp}
+                  variants={shouldReduceMotion || isMobile ? {
+                    hidden: { opacity: 0 },
+                    visible: { opacity: 1, transition: { duration: 0.2 } }
+                  } : fadeUp}
                 >
                   {item.label}
                 </motion.a>

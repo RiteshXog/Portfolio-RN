@@ -22,13 +22,14 @@ export default function Contact() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
   useEffect(() => {
+    const isMobile = window.innerWidth < 768
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return
     }
 
     const ctx = gsap.context(() => {
-      gsap.fromTo(leftRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'cubic-bezier(0.22, 1, 0.36, 1)', scrollTrigger: { trigger: sectionRef.current, start: 'top 70%' } })
-      gsap.fromTo(rightRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, delay: 0.08, ease: 'cubic-bezier(0.22, 1, 0.36, 1)', scrollTrigger: { trigger: sectionRef.current, start: 'top 70%' } })
+      gsap.fromTo(leftRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: isMobile ? 0.2 : 0.4, ease: 'power2.out', scrollTrigger: { trigger: sectionRef.current, start: 'top 80%' } })
+      gsap.fromTo(rightRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: isMobile ? 0.2 : 0.4, delay: isMobile ? 0 : 0.08, ease: 'power2.out', scrollTrigger: { trigger: sectionRef.current, start: 'top 80%' } })
     }, sectionRef)
     return () => ctx.revert()
   }, [])

@@ -44,9 +44,10 @@ const GLITCH_CHARS = '!@#$%<>{}[]'
 function GlitchText({ text, start }: { text: string; start: boolean }) {
   const [displayText, setDisplayText] = useState(text)
   const intervalRef = useRef<number | null>(null)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   useEffect(() => {
-    if (!start) return
+    if (!start || isMobile) return
 
     let iteration = 0
     const duration = 400
@@ -74,18 +75,19 @@ function GlitchText({ text, start }: { text: string; start: boolean }) {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [start, text])
+  }, [start, text, isMobile])
 
   return <span>{displayText}</span>
 }
 
 function ExplodingIcon({ icon: Icon, isHovered }: { icon: any; isHovered: boolean }) {
   const dots = Array.from({ length: 6 })
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
 
   return (
     <div className="relative inline-block">
       <motion.div
-        animate={isHovered ? {
+        animate={isHovered && !isMobile ? {
           scale: [1, 1.4, 0.9, 1.1, 1],
           color: ['#e63c2f', '#ff4d4d', '#e63c2f'],
         } : { scale: 1, color: '#e63c2f' }}
@@ -95,7 +97,7 @@ function ExplodingIcon({ icon: Icon, isHovered }: { icon: any; isHovered: boolea
       </motion.div>
 
       <AnimatePresence>
-        {isHovered && dots.map((_, i) => (
+        {isHovered && !isMobile && dots.map((_, i) => (
           <motion.div
             key={i}
             initial={{ scale: 0, opacity: 1, x: 0, y: 0 }}
@@ -194,39 +196,41 @@ function GlassCard({ icon, title, description, index }: GlassCardProps) {
       >
         <div 
           className="w-full h-full rounded-xl border-2 border-crimson"
-          style={{ filter: 'url(#liquid-goo)' }}
+          style={{ filter: isMobile ? 'none' : 'url(#liquid-goo)' }}
         />
       </div>
 
       {/* Holographic Shine Layer */}
-      <motion.div
-        className="absolute inset-0 z-1 pointer-events-none"
-        initial={{ backgroundPosition: '-200% 0' }}
-        animate={isHovered ? { backgroundPosition: '200% 0' } : { backgroundPosition: '-200% 0' }}
-        transition={{ duration: 0.6, ease: 'easeInOut' }}
-        style={{
-          background: 'linear-gradient(45deg, transparent, rgba(255,255,255,0.08), transparent)',
-          backgroundSize: '200% 100%',
-        }}
-      />
+      {!isMobile && (
+        <motion.div
+          className="absolute inset-0 z-1 pointer-events-none"
+          initial={{ backgroundPosition: '-200% 0' }}
+          animate={isHovered ? { backgroundPosition: '200% 0' } : { backgroundPosition: '-200% 0' }}
+          transition={{ duration: 0.6, ease: 'easeInOut' }}
+          style={{
+            background: 'linear-gradient(45deg, transparent, rgba(255,255,255,0.08), transparent)',
+            backgroundSize: '200% 100%',
+          }}
+        />
+      )}
 
       {/* Index (Layer 1 - Background) */}
       <motion.span 
         style={{ 
-          x: layer1X, 
-          y: layer1Y,
-          translateZ: '-10px'
+          x: isMobile ? 0 : layer1X, 
+          y: isMobile ? 0 : layer1Y,
+          translateZ: isMobile ? 0 : '-10px'
         }}
         className="absolute top-6 right-8 font-mono text-4xl text-white/5 pointer-events-none will-change-transform z-2"
       >
         {formattedIndex}
       </motion.span>
 
-      <div className="relative z-10 flex flex-col h-full" style={{ transformStyle: 'preserve-3d' }}>
+      <div className="relative z-10 flex flex-col h-full" style={{ transformStyle: isMobile ? 'flat' : 'preserve-3d' }}>
         
         {/* Icon (Layer 2) */}
         <motion.div 
-          style={{ x: layer2X, y: layer2Y, translateZ: '20px' }}
+          style={{ x: isMobile ? 0 : layer2X, y: isMobile ? 0 : layer2Y, translateZ: isMobile ? 0 : '20px' }}
           className="mb-6 will-change-transform"
         >
           <ExplodingIcon icon={icon} isHovered={isHovered} />
@@ -234,11 +238,11 @@ function GlassCard({ icon, title, description, index }: GlassCardProps) {
 
         {/* Text (Layer 3) */}
         <motion.div 
-          style={{ x: layer3X, y: layer3Y, translateZ: '10px' }}
+          style={{ x: isMobile ? 0 : layer3X, y: isMobile ? 0 : layer3Y, translateZ: isMobile ? 0 : '10px' }}
           className="will-change-transform flex-1 flex flex-col"
         >
           <h3 className="font-display text-2xl text-cream mb-4 tracking-wide">
-            {isInView ? <GlitchText text={title} start={isInView} /> : title}
+            {isInView && !isMobile ? <GlitchText text={title} start={isInView} /> : title}
           </h3>
           <p className="font-mono text-base text-muted leading-relaxed">
             {description}
@@ -256,7 +260,7 @@ function GlassCard({ icon, title, description, index }: GlassCardProps) {
       onMouseLeave={handleMouseLeave}
       style={{
         perspective: '800px',
-        transformStyle: 'preserve-3d',
+        transformStyle: isMobile ? 'flat' : 'preserve-3d',
         boxShadow: !isMobile && !shouldReduceMotion ? boxShadow : 'none',
       }}
       className="relative h-full cursor-pointer will-change-transform"
@@ -268,6 +272,7 @@ function GlassCard({ icon, title, description, index }: GlassCardProps) {
 
 export default function Services() {
   const containerRef = useRef<HTMLDivElement>(null)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
   const isInView = useInView(containerRef, { once: true, amount: 0.1 })
 
   const containerVariants = {
@@ -275,7 +280,7 @@ export default function Services() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: isMobile ? 0.05 : 0.1,
       },
     },
   }
@@ -286,7 +291,7 @@ export default function Services() {
       y: 0,
       opacity: 1,
       transition: {
-        duration: 0.6,
+        duration: isMobile ? 0.3 : 0.6,
       },
     },
   }
@@ -294,16 +299,18 @@ export default function Services() {
   return (
     <section id="services" className="relative py-[120px] bg-void overflow-hidden" style={{ zIndex: 1 }}>
       {/* SVG Liquid Filter Definition */}
-      <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
-        <defs>
-          <filter id="liquid-goo">
-            <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise">
-              <animate attributeName="baseFrequency" values="0.015;0.025;0.015" dur="4s" repeatCount="indefinite" />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" />
-          </filter>
-        </defs>
-      </svg>
+      {!isMobile && (
+        <svg className="absolute w-0 h-0 invisible" aria-hidden="true">
+          <defs>
+            <filter id="liquid-goo">
+              <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="noise">
+                <animate attributeName="baseFrequency" values="0.015;0.025;0.015" dur="4s" repeatCount="indefinite" />
+              </feTurbulence>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" />
+            </filter>
+          </defs>
+        </svg>
+      )}
 
       <div className="max-w-[1400px] mx-auto px-6 lg:px-8">
         <div className="mb-16">

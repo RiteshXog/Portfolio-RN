@@ -4,20 +4,30 @@ import { motion, useReducedMotion } from 'framer-motion'
 export default function AtmosphericBackground() {
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 })
   const [spotlightPos, setSpotlightPos] = useState({ x: 50, y: 50 })
+  const [isMobile, setIsMobile] = useState(false)
   const shouldReduceMotion = useReducedMotion() ?? false
 
   useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+
     const handleMouseMove = (e: MouseEvent) => {
+      if (window.innerWidth < 768) return
       const x = (e.clientX / window.innerWidth) * 100
       const y = (e.clientY / window.innerHeight) * 100
       setMousePos({ x, y })
     }
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true })
-    return () => window.removeEventListener('mousemove', handleMouseMove)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('resize', checkMobile)
+    }
   }, [])
 
   useEffect(() => {
+    if (isMobile || shouldReduceMotion) return
     let rafId: number
 
     const animate = () => {
@@ -30,12 +40,12 @@ export default function AtmosphericBackground() {
 
     rafId = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(rafId)
-  }, [mousePos])
+  }, [mousePos, isMobile, shouldReduceMotion])
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
       {/* Animated SVG noise with slow drift */}
-      {!shouldReduceMotion && (
+      {!shouldReduceMotion && !isMobile && (
         <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.04, mixBlendMode: 'screen' }}>
           <filter id="animated-noise">
             <feTurbulence
@@ -56,7 +66,7 @@ export default function AtmosphericBackground() {
         </svg>
       )}
 
-      {shouldReduceMotion && (
+      {(shouldReduceMotion || isMobile) && (
         <div
           className="absolute inset-0 opacity-[0.025]"
           style={{
@@ -66,7 +76,7 @@ export default function AtmosphericBackground() {
       )}
 
       {/* Breathing Orb 1 - Hero top right */}
-      {!shouldReduceMotion && (
+      {!shouldReduceMotion && !isMobile && (
         <motion.div
           style={{
             position: 'absolute',
@@ -92,7 +102,7 @@ export default function AtmosphericBackground() {
       )}
 
       {/* Breathing Orb 2 - About bottom left */}
-      {!shouldReduceMotion && (
+      {!shouldReduceMotion && !isMobile && (
         <motion.div
           style={{
             position: 'absolute',
@@ -119,7 +129,7 @@ export default function AtmosphericBackground() {
       )}
 
       {/* Breathing Orb 3 - Services center */}
-      {!shouldReduceMotion && (
+      {!shouldReduceMotion && !isMobile && (
         <motion.div
           style={{
             position: 'absolute',
@@ -156,15 +166,17 @@ export default function AtmosphericBackground() {
       />
 
       {/* Mouse-reactive glow */}
-      <div
-        className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full blur-[100px] opacity-[0.03] transition-transform duration-500 ease-out"
-        style={{
-          background: 'radial-gradient(circle, rgba(183, 75, 75, 0.5) 0%, transparent 60%)',
-          transform: `translate(${mousePos.x * 8 - 200}px, ${mousePos.y * 8 - 200}px)`,
-        }}
-      />
+      {!isMobile && (
+        <div
+          className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full blur-[100px] opacity-[0.03] transition-transform duration-500 ease-out"
+          style={{
+            background: 'radial-gradient(circle, rgba(183, 75, 75, 0.5) 0%, transparent 60%)',
+            transform: `translate(${mousePos.x * 8 - 200}px, ${mousePos.y * 8 - 200}px)`,
+          }}
+        />
+      )}
 
-      {!shouldReduceMotion && (
+      {!shouldReduceMotion && !isMobile && (
         <div
           className="absolute w-[600px] h-[600px] rounded-full blur-[120px] transition-transform [transition-duration:2000ms] ease-out"
           style={{
