@@ -1,3 +1,4 @@
+// src/App.tsx
 import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Lenis from 'lenis'
@@ -6,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import LoadingScreen from './components/ui/LoadingScreen'
 import Marquee from './components/ui/Marquee'
 import StatsCounter from './components/ui/StatsCounter'
+import FloatingDock from './components/ui/FloatingDock'
 
 // Lazy load sections
 const Nav = lazy(() => import('./sections/Nav'))
@@ -73,41 +75,33 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen">
-      {/* Loading screen - shows on first load */}
       <AnimatePresence mode="wait">
         {!isLoadingComplete && (
           <LoadingScreen onComplete={handleLoadingComplete} />
         )}
       </AnimatePresence>
 
-      {/* Page content - fades in after loading completes */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoadingComplete ? 1 : 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
         style={{ position: 'relative' }}
       >
-        {/* Atmospheric background */}
         <AtmosphericBackground />
-
-        {/* Custom cursor - hidden on touch devices */}
         <CustomCursor />
 
-        {/* Navigation - staggered reveal after content starts */}
-        <Suspense fallback={null}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: isLoadingComplete ? 1 : 0, y: isLoadingComplete ? 0 : -20 }}
-            transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
-          >
+        {/* Hidden original navigation */}
+        <div className="hidden pointer-events-none select-none overflow-hidden h-0">
+          <Suspense fallback={null}>
             <Nav />
-          </motion.div>
-        </Suspense>
+          </Suspense>
+        </div>
 
-        {/* Section indicators - fixed right side dots */}
+        {/* Bottom Floating Dock */}
+        <FloatingDock />
+
         <SectionIndicator />
 
-        {/* Page content */}
         <main className="relative" style={{ zIndex: 1 }}>
           <Suspense fallback={<div className="h-screen bg-void" />}>
             <Hero />
@@ -122,10 +116,7 @@ export default function App() {
           </Suspense>
         </main>
 
-        {/* Back to top button */}
         <BackToTop />
-
-        {/* Konami code easter egg */}
         <EasterEgg />
       </motion.div>
     </div>
