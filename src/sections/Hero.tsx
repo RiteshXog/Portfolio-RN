@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, easeOut } from "framer-motion";
 import { Linkedin, Github, Twitter } from "lucide-react";
 import { socialLinks } from "../data/projects";
 import MagneticButton from "../components/ui/MagneticButton";
@@ -32,8 +32,8 @@ export default function Hero() {
     visible: { 
       opacity: 1, 
       y: 0, 
-      transition: { duration: 0.2, ease: "easeOut" } 
-    }
+      transition: { duration: 0.2, ease: easeOut },
+    },
   };
 
   const mobileStagger = {
@@ -127,7 +127,7 @@ export default function Hero() {
                     transition={{
                       duration: 2,
                       repeat: Infinity,
-                      ease: "easeOut",
+                      ease: easeOut,
                     }}
                   />
                 )}

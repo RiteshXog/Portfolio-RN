@@ -28,7 +28,7 @@ gsap.registerPlugin(ScrollTrigger)
 export default function App() {
   const lenisRef = useRef<Lenis | null>(null)
   const [isLoadingComplete, setIsLoadingComplete] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [, setIsMobile] = useState(false)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -45,7 +45,6 @@ export default function App() {
         duration: 1.2,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         touchMultiplier: 2,
-        smoothTouch: false, // Disable smooth scroll on touch for performance
       })
       lenisRef.current = lenis
 
