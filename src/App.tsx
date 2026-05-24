@@ -30,43 +30,29 @@ gsap.registerPlugin(ScrollTrigger)
 export default function App() {
   const lenisRef = useRef<Lenis | null>(null)
   const [isLoadingComplete, setIsLoadingComplete] = useState(false)
-  const [, setIsMobile] = useState(false)
 
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768
-      setIsMobile(mobile)
-      return mobile
-    }
-    
-    const mobile = checkMobile()
-    window.addEventListener('resize', checkMobile)
+    // Standard Lenis initialization for natural window scrolling
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      touchMultiplier: 2,
+    })
+    lenisRef.current = lenis
 
-    if (!mobile) {
-      const lenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        touchMultiplier: 2,
-      })
-      lenisRef.current = lenis
+    lenis.on('scroll', ScrollTrigger.update)
 
-      lenis.on('scroll', ScrollTrigger.update)
-
-      const updateLenis = (time: number) => {
-        lenis.raf(time * 1000)
-      }
-
-      gsap.ticker.add(updateLenis)
-      gsap.ticker.lagSmoothing(0)
-
-      return () => {
-        lenis.destroy()
-        gsap.ticker.remove(updateLenis)
-        window.removeEventListener('resize', checkMobile)
-      }
+    const updateLenis = (time: number) => {
+      lenis.raf(time * 1000)
     }
 
-    return () => window.removeEventListener('resize', checkMobile)
+    gsap.ticker.add(updateLenis)
+    gsap.ticker.lagSmoothing(0)
+
+    return () => {
+      lenis.destroy()
+      gsap.ticker.remove(updateLenis)
+    }
   }, [])
 
   const handleLoadingComplete = () => {
@@ -85,24 +71,25 @@ export default function App() {
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoadingComplete ? 1 : 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        style={{ position: 'relative' }}
+        className="relative"
       >
         <AtmosphericBackground />
         <CustomCursor />
 
-        {/* Hidden original navigation */}
-        <div className="hidden pointer-events-none select-none overflow-hidden h-0">
+        {/* Top Navigation - visible on mobile only */}
+        <div className="md:hidden">
           <Suspense fallback={null}>
             <Nav />
           </Suspense>
         </div>
 
-        {/* Bottom Floating Dock */}
+        {/* Bottom Floating Dock - handles its own mobile removal */}
         <FloatingDock />
 
         <SectionIndicator />
 
-        <main className="relative" style={{ zIndex: 1 }}>
+        {/* Main content wrapper with natural scrolling (no h-screen or overflow-hidden) */}
+        <main className="relative z-[1]">
           <Suspense fallback={<div className="h-screen bg-void" />}>
             <Hero />
             <Marquee />
