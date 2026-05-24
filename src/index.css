@@ -30,6 +30,14 @@
     overflow-x: hidden;
   }
 
+  body.loading {
+    overflow: hidden;
+  }
+
+  body.loaded {
+    overflow: auto;
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 4px;

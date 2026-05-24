@@ -32,31 +32,46 @@ export default function App() {
   const [isLoadingComplete, setIsLoadingComplete] = useState(false)
 
   useEffect(() => {
-    // Standard Lenis initialization for natural window scrolling
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      touchMultiplier: 2,
-    })
-    lenisRef.current = lenis
-
-    lenis.on('scroll', ScrollTrigger.update)
-
-    const updateLenis = (time: number) => {
-      lenis.raf(time * 1000)
-    }
-
-    gsap.ticker.add(updateLenis)
-    gsap.ticker.lagSmoothing(0)
-
+    // Prevent scroll during loading
+    document.body.classList.add('loading')
+     
     return () => {
-      lenis.destroy()
+      if (lenisRef.current) {
+        lenisRef.current.destroy()
+      }
       gsap.ticker.remove(updateLenis)
+      document.body.classList.remove('loading', 'loaded')
     }
   }, [])
 
+  const updateLenis = (time: number) => {
+    if (lenisRef.current) {
+      lenisRef.current.raf(time * 1000)
+    }
+  }
+
   const handleLoadingComplete = () => {
     setIsLoadingComplete(true)
+    document.body.classList.remove('loading')
+    document.body.classList.add('loaded')
+
+    // Defer Lenis initialization until after loading screen is gone
+    setTimeout(() => {
+      const lenis = new Lenis({
+        duration: 0.8,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        wheelMultiplier: 1.2,
+        touchMultiplier: 2,
+        infinite: false,
+      })
+       
+      lenisRef.current = lenis
+      lenis.start() // Explicitly start Lenis
+       
+      lenis.on('scroll', ScrollTrigger.update)
+      gsap.ticker.add(updateLenis)
+      gsap.ticker.lagSmoothing(0)
+    }, 100) // Small delay to allow browser to paint
   }
 
   return (

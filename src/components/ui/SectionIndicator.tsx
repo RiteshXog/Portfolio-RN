@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface Section {
   id: string
@@ -14,41 +14,52 @@ const sections: Section[] = [
   { id: 'contact', label: 'Contact' },
 ]
 
-export default function SectionIndicator() {
-  const [activeSection, setActiveSection] = useState('home')
-  const [isMobile, setIsMobile] = useState(false)
-  const shouldReduceMotion = useReducedMotion()
+const DOT_GAP = 28 // Gap between dots in pixels
+const TRACK_HEIGHT = (sections.length - 1) * DOT_GAP
 
+export default function SectionIndicator() {
+  const [_activeSection, setActiveSection] = useState('home')
+  const [scrollProgress, setScrollProgress] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+  const [hoveredSection, setHoveredSection] = useState<string | null>(null)
+
+  // Mobile detection
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Live scroll progress and active section detection
   useEffect(() => {
-    if (isMobile || shouldReduceMotion) return
+    const handleScroll = () => {
+      // 1. Calculate live scroll progress (0 to 1)
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight
+      const progress = window.scrollY / totalHeight
+      setScrollProgress(Math.min(1, Math.max(0, progress)))
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id)
+      // 2. Detect active section (using scroll position approach)
+      const sectionIds = sections.map(s => s.id)
+      const scrollPosition = window.scrollY + window.innerHeight / 2
+
+      for (const id of sectionIds) {
+        const element = document.getElementById(id)
+        if (element) {
+          const top = element.offsetTop
+          const bottom = top + element.offsetHeight
+          if (scrollPosition >= top && scrollPosition < bottom) {
+            setActiveSection(id)
+            break
           }
-        })
-      },
-      { threshold: 0.3 }
-    )
+        }
+      }
+    }
 
-    sections.forEach(({ id }) => {
-      const element = document.getElementById(id)
-      if (element) observer.observe(element)
-    })
-
-    return () => observer.disconnect()
-  }, [isMobile, shouldReduceMotion])
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const handleClick = (id: string) => {
     const element = document.getElementById(id)
@@ -57,51 +68,111 @@ export default function SectionIndicator() {
     }
   }
 
-  if (isMobile || shouldReduceMotion) return null
+  if (isMobile) return null
 
   return (
     <nav
       className="fixed right-6 top-1/2 -translate-y-1/2 z-[100] hidden md:block"
       aria-label="Section navigation"
     >
-      <ul className="flex flex-col gap-4">
-        {sections.map(({ id, label }) => {
-          const isActive = activeSection === id
-          return (
-            <li key={id} className="relative group">
-              {/* Tooltip */}
-              <span
-                className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
-                style={{ backgroundColor: '#1a1a1a' }}
-              >
-                {label}
-              </span>
+      <div className="relative flex flex-col items-center">
+        {/* Track Container */}
+        <div className="relative flex flex-col items-center" style={{ height: TRACK_HEIGHT }}>
+          
+          {/* Background Track Line (Full Height) */}
+          <div 
+            className="absolute top-0 w-[1px] bg-white/10" 
+            style={{ height: TRACK_HEIGHT, zIndex: 0 }}
+          />
 
-              <button
-                onClick={() => handleClick(id)}
-                aria-label={`Go to ${label}`}
-                className="flex items-center justify-center w-4 h-4 rounded-full transition-all duration-300"
-              >
-                <motion.div
-                  animate={{
-                    scale: isActive ? 1.6 : 1,
-                    backgroundColor: isActive ? '#b74b4b' : 'rgba(255,255,255,0.2)',
-                    boxShadow: isActive
-                      ? '0 0 12px rgba(183, 75, 75, 0.6)'
-                      : 'none',
-                  }}
-                  transition={{ duration: 0.3 }}
-                  style={{
-                    width: isActive ? 8 : 5,
-                    height: isActive ? 8 : 5,
-                    borderRadius: '50%',
-                  }}
-                />
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+          {/* Foreground Progress Line (Live Fill) */}
+          <motion.div
+            className="absolute top-0 w-[1px] bg-[#e63c2f] origin-top"
+            initial={false}
+            animate={{ height: `${scrollProgress * 100}%` }}
+            transition={{ duration: 0.1, ease: 'linear' }}
+            style={{ zIndex: 1 }}
+          />
+
+          {/* Moving Active Indicator Dot */}
+          <motion.div
+            className="absolute w-[10px] h-[10px] bg-[#e63c2f] rounded-full"
+            initial={false}
+            animate={{ y: scrollProgress * TRACK_HEIGHT }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            style={{ 
+              zIndex: 3, 
+              left: '50%', 
+              x: '-50%', 
+              boxShadow: '0 0 8px #e63c2f, 0 0 16px rgba(230, 60, 47, 0.4)' 
+            }}
+          >
+            {/* Pulse Ring for Moving Dot */}
+            <motion.div
+              className="absolute inset-0 rounded-full border border-[#e63c2f]"
+              animate={{ scale: [1, 2.5], opacity: [1, 0] }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeOut",
+              }}
+            />
+          </motion.div>
+
+          {/* Milestone Dots (Fixed) */}
+          <ul className="relative flex flex-col items-center" style={{ gap: DOT_GAP - 24, zIndex: 2 }}>
+            {sections.map(({ id, label }) => {
+              const isHovered = hoveredSection === id
+
+              return (
+                <li key={id} className="relative flex items-center justify-center w-6 h-6">
+                  {/* Tooltip Label */}
+                  <AnimatePresence>
+                    {isHovered && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 8 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-10 px-2 py-1 bg-black/60 backdrop-blur-md border border-white/10 rounded
+                          text-[10px] font-mono text-white/70 tracking-widest uppercase pointer-events-none"
+                      >
+                        {label}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <button
+                    onClick={() => handleClick(id)}
+                    onMouseEnter={() => setHoveredSection(id)}
+                    onMouseLeave={() => setHoveredSection(null)}
+                    className="relative flex items-center justify-center w-full h-full outline-none group"
+                    aria-label={`Scroll to ${label}`}
+                  >
+                    {/* Fixed Dot Marker */}
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        width: 4,
+                        height: 4,
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                      }}
+                      whileHover={{ 
+                        scale: 1.5, 
+                        backgroundColor: 'rgba(255,255,255,0.6)',
+                        width: 4, // Keep size consistent on hover, just scale
+                        height: 4 
+                      }}
+                      transition={{ duration: 0.2 }}
+                      className="rounded-full relative z-10"
+                    />
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </div>
     </nav>
   )
 }
