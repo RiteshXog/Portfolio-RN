@@ -63,6 +63,7 @@ export default function App() {
         wheelMultiplier: 1.2,
         touchMultiplier: 2,
         infinite: false,
+        
       })
        
       lenisRef.current = lenis
@@ -117,7 +118,6 @@ export default function App() {
             <Footer />
           </Suspense>
         </main>
-
         <BackToTop />
         <EasterEgg />
       </motion.div>
