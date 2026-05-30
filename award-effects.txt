@@ -1,0 +1,92 @@
+AWARD-LEVEL ANIMATION & EFFECT SUGGESTIONS
+============================================
+
+--- SCROLL EXPERIENCES ---
+
+1. Scroll-Triggered SVG Blob Morph
+2. Scroll-Driven Frame-by-Frame Video (Apple-style)
+3. 3D Scene Orbit on Scroll (Three.js)
+4. Section-to-Section WebGL Shader Transition (morph/dissolve/glitch)
+5. Perspective Z-Stack Card Fan-Out on Scroll
+6. Scroll-Velocity Skew on Hero Elements
+7. Parallax Depth Map (multi-layer, different rates)
+8. Scroll-Based Color Palette Shift per Section
+
+--- THREE.JS / WEBGL ---
+
+9. Interactive 3D Particle Point Cloud (mouse-reactive)
+10. WebGL Fluid Simulation Background
+11. 3D Torus Knot / Globe with Scroll Interaction
+12. Instanced Mesh Particle System with Physics
+13. Shader-Based Image Distortion on Hover
+14. 3D Infinite Carousel for Projects
+
+--- CURSOR & MOUSE ---
+
+15. Magnetic Cursor Field Lines (iron-filing style)
+16. Liquid Gooey Blob Following Cursor (SVG feGaussianBlur)
+17. Cursor-Reactive Mesh Grid Deformation
+18. Custom Cursor with 3D Shadow Depth
+19. Mouse-Tracking Light Source with Volumetric Rays
+
+--- TYPOGRAPHY & TEXT ---
+
+20. Split Text with 3D Character Rotation on Hover
+21. Kinetic Typography (scroll-velocity-driven styling)
+22. Per-Character Scramble with RGB Split on Intersection
+23. Text That Unravels / Knits on Scroll
+24. Morphing Headline (one phrase smoothly morphs into another)
+25. Variable Font Weight Animation (wght axis driven by scroll)
+
+--- IMAGE & MEDIA ---
+
+26. Reveal with Liquid Distortion Mask (SVG feDisplacementMap)
+27. Polaroid-Style Image Stack with Random Rotation on Hover
+28. Image-to-Particle Explosion on Click
+29. Multi-Layer Image Parallax with Depth Map
+30. Cinematic Letterbox Mask Reveal (top and bottom bars slide)
+
+--- BACKGROUND & AMBIENT ---
+
+31. WebGL Voronoi / Cellular Noise Background
+32. Interactive Constellation Network (nodes connected by lines)
+33. Aurora Borealis Wave Effect on Scroll
+34. Dynamic Gradient Mesh with Mouse Interaction
+35. Particle Swarm with Boids Algorithm
+
+--- MICRO-INTERACTIONS ---
+
+36. Ripple Effect on All Clickable Cards
+37. Button with Progress Fill on Long-Press
+38. Form Input with Animated Neon Border on Focus
+39. Card Stack Shuffle Animation on Tab Switch
+40. Checkbox / Toggle with Liquid Morph
+
+--- SECTION-SPECIFIC ---
+
+41. Hero: Full-Screen Particle Intro Burst on Load
+42. Hero: Typewriter with Glitch Correction Effect
+43. About: Image Reveals via Circular Spotlight (cursor-follow)
+44. About: Interactive Timeline with Scroll-Connected Nodes
+45. Services: 3D Rotating Service Orb (each service a floating card around a sphere)
+46. Projects: 3D Room / Gallery Walkthrough (WASD + mouse look)
+47. Projects: Interactive Before/After Comparison Slider
+48. Contact: Confetti Burst on Successful Form Submit
+49. Contact: 3D Globe with Pins at User Locations
+50. Footer: Infinite Scrolling Tech Stack Marquee with 3D Depth
+
+--- PAGES / TRANSITIONS ---
+
+51. Loader-to-Hero Seamless Morph Transition
+52. Page Change with Split-Panel Curtain Reveal
+53. Section Change with RGB Split Glitch Sweep
+54. Back-to-Top with Morphing Scroll Progress Ring
+55. 404 Page with Interactive 3D Scene (roll-a-ball / maze)
+
+--- ACCESSIBILITY / UX BONUS ---
+
+56. Reduced-Motion-Aware Fallbacks for Every Effect
+57. Touch-Optimized Interactions That Degrade Gracefully
+58. Scroll-Snap with Progress-Linked Section Transitions
+59. Focus-Visible Rings with Magnetic Snap
+60. Loading Skeleton with Shimmer + Morph Placeholder
